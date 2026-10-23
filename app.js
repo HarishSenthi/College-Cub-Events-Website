@@ -1,0 +1,141 @@
+'use strict';
+// Demo only. Browser-side roles and data are NOT security boundaries.
+const KEY='cit-clubhub-v2-team4';
+const seed={clubs:[
+{id:'robotics',name:'Robotics & AI Club',category:'Technical',emoji:'🤖',mission:'Build bold ideas through robotics, AI and collaborative engineering.',mentor:'Dr. Meera Iyer',lead:'Arjun Kumar',committee:['Arjun Kumar — President','Nisha R — Secretary'],social:'@cit_robotics',recruiting:true,status:'Approved'},
+{id:'arts',name:'Cultural & Arts Society',category:'Cultural',emoji:'🎭',mission:'Celebrate creativity through music, dance, theatre and fine arts.',mentor:'Prof. Lakshmi Devi',lead:'Kavya S',committee:['Kavya S — President','Rahul P — Treasurer'],social:'@cit_cultural',recruiting:true,status:'Approved'},
+{id:'sports',name:'CIT Sports Collective',category:'Sports',emoji:'🏏',mission:'Grow leadership, resilience and friendship through campus sport.',mentor:'Dr. Meera Iyer',lead:'Vishal R',committee:['Vishal R — Captain'],social:'@cit_sports',recruiting:false,status:'Approved'},
+{id:'green',name:'Green Campus Forum',category:'Social',emoji:'🌱',mission:'Make our campus greener with student-led sustainability action.',mentor:'Prof. Lakshmi Devi',lead:'Harini S',committee:['Harini S — President'],social:'@cit_green',recruiting:true,status:'Approved'}],venues:[{id:'auditorium',name:'Main Auditorium',capacity:500},{id:'seminar3',name:'Seminar Hall 3',capacity:100},{id:'oat',name:'Open Air Theatre',capacity:750},{id:'ground',name:'Sports Ground',capacity:1200},{id:'lab',name:'Innovation Lab',capacity:60}],events:[
+{id:'e1',title:'TechNova: AI Innovation Day',clubId:'robotics',date:'2026-11-15',start:'09:00',end:'15:00',venueId:'auditorium',entry:'Free',description:'A day of AI demos, mini challenges, speaker sessions and prototypes.',emoji:'🤖',status:'Published',budget:5000,resources:'Projector, sound system',security:'Standard stewarding',signatures:[{by:'Dr. Meera Iyer',at:'2026-10-01'}]},
+{id:'e2',title:'CIT Cultural Fest',clubId:'arts',date:'2026-11-20',start:'16:00',end:'20:00',venueId:'oat',entry:'Free',description:'An evening of music, dance and vibrant campus performances.',emoji:'🎶',status:'Published',budget:12000,resources:'Stage sound and lights',security:'Crowd management',signatures:[{by:'Prof. Lakshmi Devi',at:'2026-10-01'}]},
+{id:'e3',title:'Web Development Bootcamp',clubId:'robotics',date:'2026-11-25',start:'10:00',end:'13:00',venueId:'lab',entry:'Free',description:'Learn web fundamentals and build your own mini project.',emoji:'💻',status:'Published',budget:1500,resources:'Computers, projector',security:'None',signatures:[{by:'Dr. Meera Iyer',at:'2026-10-02'}]},
+{id:'e4',title:'CIT Premier League',clubId:'sports',date:'2026-12-05',start:'08:00',end:'17:00',venueId:'ground',entry:'Free',description:'Inter-department cricket, teamwork and competition.',emoji:'🏏',status:'Published',budget:7500,resources:'Scoreboard, first-aid kit',security:'Ground marshals',signatures:[{by:'Dr. Meera Iyer',at:'2026-10-03'}]},
+{id:'e5',title:'Green Campus Drive',clubId:'green',date:'2026-12-10',start:'09:00',end:'12:00',venueId:'seminar3',entry:'Free',description:'Sustainability awareness, campus planting and volunteer action.',emoji:'🌿',status:'Published',budget:2300,resources:'Projector, gardening tools',security:'None',signatures:[{by:'Prof. Lakshmi Devi',at:'2026-10-03'}]},
+{id:'e6',title:'Industry Expert Talk',clubId:'robotics',date:'2026-12-15',start:'14:00',end:'16:00',venueId:'auditorium',entry:'Free',description:'Explore industry trends, AI careers and practical learning.',emoji:'🎤',status:'Published',budget:3000,resources:'Microphones, projector',security:'Standard',signatures:[{by:'Dr. Meera Iyer',at:'2026-10-03'}]}],registrations:[],applications:[],clubRequests:[],audit:[],settings:{recruitmentOpen:true}};
+const eventArtwork={ e1:'assets/events/ai-innovation-cinematic.jpg', e2:'assets/events/cultural-fest-music.png', e3:'assets/events/web-bootcamp-cinematic.jpg', e4:'assets/events/cricket-league-cinematic.jpg', e5:'assets/events/green-campus-cinematic.jpg', e6:'assets/events/expert-talk-cinematic.jpg' };
+const artworkFor=e=>eventArtwork[e.id] || eventArtwork[{robotics:'e1',arts:'e2',sports:'e4',green:'e5'}[e.clubId]] || 'assets/events/ai-innovation.svg';
+const clone=x=>JSON.parse(JSON.stringify(x));
+let db;try{db=JSON.parse(localStorage.getItem(KEY))||clone(seed)}catch{db=clone(seed)};
+let role='student',tab='';const $=id=>document.getElementById(id);
+const save=()=>localStorage.setItem(KEY,JSON.stringify(db));
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const club=id=>db.clubs.find(x=>x.id===id),venue=id=>db.venues.find(x=>x.id===id);
+const pretty=d=>d?new Date(d+'T00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'';
+const audit=(action,detail)=>{db.audit.unshift({at:new Date().toLocaleString(),role,action,detail});save()};
+const toast=s=>{const el=$('toast');el.textContent=s;el.style.display='block';clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>el.style.display='none',3500)};
+const published=()=>db.events.filter(e=>e.status==='Published');
+const leadClub='robotics';const mentor='Dr. Meera Iyer'; // Mock identities for the role selector
+const activeClub=x=>x.clubId===leadClub;
+function slotConflicts(item,excludeId){return db.events.filter(e=>e.id!==excludeId&&e.venueId===item.venueId&&e.date===item.date&&['Pending Faculty Approval','Pending Admin Approval','Published'].includes(e.status)&&item.start<e.end&&item.end>e.start)}
+function renderEvents(){const q=$('search').value.toLowerCase(),category=$('category-filter').value,date=$('date-filter').value,v=$('venue-filter').value,entry=$('entry-filter').value;const a=published().filter(e=>(e.title+' '+club(e.clubId)?.name).toLowerCase().includes(q)&&(!category||club(e.clubId)?.category===category)&&(!date||e.date===date)&&(!v||e.venueId===v)&&(!entry||e.entry===entry)).sort((a,b)=>a.date.localeCompare(b.date));$('result-count').textContent=a.length+' published event'+(a.length===1?'':'s');$('events-grid').innerHTML=a.map(e=>`<article class="event-card"><div class="visual"><span class="category-tag">${esc(club(e.clubId)?.category)}</span><img class="event-artwork" src="${artworkFor(e)}" alt="Illustration for ${esc(e.title)}" loading="lazy"></div><div class="card-content"><span class="muted">📅 ${pretty(e.date)} · ${esc(e.start)} &nbsp; 📍 ${esc(venue(e.venueId)?.name)}</span><h3>${esc(e.title)}</h3><span class="muted">by ${esc(club(e.clubId)?.name)}</span><p>${esc(e.description)}</p><div class="card-bottom"><button class="linkbutton" data-event="${esc(e.id)}">View details ↗</button><span class="chip ${e.entry==='Paid'?'paid':''}">${esc(e.entry)} entry</span></div></div></article>`).join('');$('no-events').hidden=a.length>0;$('stat-events').textContent=published().length;$('stat-clubs').textContent=db.clubs.filter(c=>c.status==='Approved').length;$('stat-venues').textContent=db.venues.length}
+function renderClubs(){const a=db.clubs.filter(c=>c.status==='Approved');$('club-grid').innerHTML=a.map(c=>`<article class="club-card"><div class="club-emoji">${esc(c.emoji)}</div><h3>${esc(c.name)}</h3><div class="muted">${esc(c.category)} · ${esc(c.mentor)}</div><p>${esc(c.mission)}</p><footer><span class="chip ${c.recruiting?'':'pending'}">${c.recruiting?'Recruiting':'Recruitment closed'}</span><button class="linkbutton" data-club="${esc(c.id)}">Visit club →</button></footer></article>`).join('')}
+function renderVenues(){ $('venue-grid').innerHTML=db.venues.map(v=>{const reserved=db.events.filter(e=>e.venueId===v.id&&['Pending Faculty Approval','Pending Admin Approval','Published'].includes(e.status)).sort((a,b)=>a.date.localeCompare(b.date));return `<article class="venue-card"><h3>📍 ${esc(v.name)}</h3><p>Capacity: ${v.capacity} people</p><strong class="muted">Reserved & held slots</strong><div class="slot-list">${reserved.length?reserved.map(e=>`<div class="slot"><span>${pretty(e.date)} · ${esc(e.start)}–${esc(e.end)}</span><span class="chip ${e.status==='Published'?'':'pending'}">${e.status==='Published'?'Booked':'Pending'}</span></div>`).join(''):'<span class="muted">No upcoming reservations</span>'}</div></article>`}).join('')}
+function modal(html){$('modal-content').innerHTML=html;$('modal').showModal()}
+function eventDetail(id){const e=db.events.find(x=>x.id===id);if(!e)return;modal(`<img class="modal-event-artwork" src="${artworkFor(e)}" alt="Illustration for ${esc(e.title)}"><span class="eyebrow navy">${esc(club(e.clubId)?.category)} EVENT</span><h2>${esc(e.title)}</h2><p>${esc(e.description)}</p><div class="panel"><p>📅 ${pretty(e.date)} · ${esc(e.start)} to ${esc(e.end)}</p><p>📍 ${esc(venue(e.venueId)?.name)}</p><p>🏛 Organized by ${esc(club(e.clubId)?.name)}</p><p>🎟 ${esc(e.entry)} entry</p><p>👥 Participation format: Team of 4 students</p></div><p class="helper">Team registrations are stored locally for this prototype. No online payment is collected.</p><button class="btn primary" data-register="${esc(e.id)}">Register team of 4 →</button>`)}
+function clubDetail(id){const c=club(id);if(!c)return;const items=published().filter(e=>e.clubId===id);$('club-profile').innerHTML=`<div class="microsite"><div class="profile-top"><div class="club-emoji">${esc(c.emoji)}</div><div><span class="eyebrow navy">${esc(c.category)} CLUB</span><h3>${esc(c.name)}</h3></div></div><p>${esc(c.mission)}</p><div class="two-col"><div><b>Core committee</b><p>${c.committee.map(esc).join('<br>')}</p><b>Faculty mentor</b><p>${esc(c.mentor)}</p></div><div><b>Social handle</b><p>${esc(c.social)}</p><b>Recruitment</b><p>${c.recruiting?'Open for applications':'Currently closed'}</p>${c.recruiting&&db.settings.recruitmentOpen?`<button class="btn primary" data-join="${esc(c.id)}">Apply to join ↗</button>`:''}</div></div><h4>Club event calendar</h4>${items.length?items.map(e=>`<div class="rowline"><b>${pretty(e.date)} — ${esc(e.title)}</b><button class="linkbutton" data-event="${esc(e.id)}">Details →</button></div>`).join(''):'<p class="muted">No public events yet.</p>'}</div>`;$('club-profile').scrollIntoView({block:'nearest',behavior:'smooth'})}
+function register(id){
+  const e=db.events.find(x=>x.id===id);
+  if(!e)return;
+  modal(`
+    <h2>Team registration for ${esc(e.title)}</h2>
+    <p class="helper">Register a team of 4 students. This is a demo form and stores the team locally in your browser.</p>
+    <form id="rsvp-form" class="modal-form team-form">
+      <input type="hidden" name="eventId" value="${esc(id)}">
+      <div class="modal-grid two-up">
+        <label>Team name<input name="teamName" required minlength="2" placeholder="e.g., Rhythm Squad"></label>
+        <label>Department / class<input name="department" required placeholder="e.g., CSE – III Year"></label>
+      </div>
+      <fieldset class="team-block">
+        <legend>Team leader · Member 1</legend>
+        <div class="modal-grid two-up">
+          <label>Full name<input name="member1Name" required minlength="2" placeholder="Leader full name"></label>
+          <label>College email<input name="member1Email" type="email" required placeholder="member1@cit.edu"></label>
+          <label>Student ID<input name="member1StudentId" required placeholder="CIT001"></label>
+          <label>Phone number<input name="member1Phone" required placeholder="98XXXXXXXX"></label>
+        </div>
+      </fieldset>
+      <fieldset class="team-block">
+        <legend>Member 2</legend>
+        <div class="modal-grid two-up">
+          <label>Full name<input name="member2Name" required minlength="2" placeholder="Second member"></label>
+          <label>College email<input name="member2Email" type="email" required placeholder="member2@cit.edu"></label>
+          <label>Student ID<input name="member2StudentId" required placeholder="CIT002"></label>
+          <label>Phone number<input name="member2Phone" required placeholder="98XXXXXXXX"></label>
+        </div>
+      </fieldset>
+      <fieldset class="team-block">
+        <legend>Member 3</legend>
+        <div class="modal-grid two-up">
+          <label>Full name<input name="member3Name" required minlength="2" placeholder="Third member"></label>
+          <label>College email<input name="member3Email" type="email" required placeholder="member3@cit.edu"></label>
+          <label>Student ID<input name="member3StudentId" required placeholder="CIT003"></label>
+          <label>Phone number<input name="member3Phone" required placeholder="98XXXXXXXX"></label>
+        </div>
+      </fieldset>
+      <fieldset class="team-block">
+        <legend>Member 4</legend>
+        <div class="modal-grid two-up">
+          <label>Full name<input name="member4Name" required minlength="2" placeholder="Fourth member"></label>
+          <label>College email<input name="member4Email" type="email" required placeholder="member4@cit.edu"></label>
+          <label>Student ID<input name="member4StudentId" required placeholder="CIT004"></label>
+          <label>Phone number<input name="member4Phone" required placeholder="98XXXXXXXX"></label>
+        </div>
+      </fieldset>
+      <button class="btn primary">Submit team registration</button>
+    </form>`)
+}
+function applyJoin(id){modal(`<h2>Join ${esc(club(id)?.name)}</h2><form id="join-form" class="modal-form"><input type="hidden" name="clubId" value="${esc(id)}"><label>Student name<input name="name" required></label><label>College email<input name="email" type="email" required></label><label>Student ID<input name="studentId" required></label><label>Why do you want to join?<textarea name="reason" required></textarea></label><button class="btn primary">Submit application</button></form>`)}
+const configs={student:{title:'Student workspace',subtitle:'Track event RSVPs and your club membership applications.',tabs:['My RSVPs','Club applications']},lead:{title:'Club representative workspace',subtitle:'Managing Robotics & AI Club only · mock representative Arjun Kumar.',tabs:['My club events','Create event','Member applications','Attendees','Club profile']},faculty:{title:'Faculty mentor workspace',subtitle:'Review proposals for clubs assigned to Dr. Meera Iyer.',tabs:['Faculty approvals','Approved events']},admin:{title:'Super administrator workspace',subtitle:'Campus-wide oversight, final approvals, venue clearance and audit activity.',tabs:['Admin approvals','Club requests','All events','Analytics & audit','Global settings']}};
+function renderWorkspace(){const cfg=configs[role];$('workspace-title').textContent=cfg.title;$('workspace-subtitle').textContent=cfg.subtitle;if(!cfg.tabs.includes(tab))tab=cfg.tabs[0];$('workspace-tabs').innerHTML=cfg.tabs.map(t=>`<button class="${t===tab?'active':''}" data-tab="${esc(t)}">${esc(t)}</button>`).join('');let html='';
+if(role==='student'){if(tab==='My RSVPs')html=listRows(db.registrations.map(r=>({title:r.name+' — '+(db.events.find(e=>e.id===r.eventId)?.title||'Event'),detail:r.email+' · '+r.studentId,status:'Registered'})),'No RSVPs in this browser.');else html=listRows(db.applications.map(a=>({title:a.name+' — '+club(a.clubId)?.name,detail:a.studentId+' · '+a.email,status:a.status})),'No club applications in this browser.');}
+if(role==='lead'){const owned=db.events.filter(activeClub);if(tab==='My club events')html=listRows(owned.map(e=>({title:e.title,detail:pretty(e.date)+' · '+e.start+'–'+e.end+' · '+(venue(e.venueId)?.name||''),status:e.status,action:e.status==='Draft'?`<button class="btn small primary" data-submit="${esc(e.id)}">Send for faculty review</button>`:''})),'No events yet. Create a new event.');if(tab==='Create event')html=eventForm();if(tab==='Member applications')html=listRows(db.applications.filter(x=>x.clubId===leadClub).map(a=>({title:a.name,detail:a.studentId+' · '+a.email+' · '+a.reason,status:a.status,action:a.status==='Pending'?`<button class="btn small primary" data-membership="${esc(a.id)}" data-decision="Accepted">Accept</button><button class="btn small danger" data-membership="${esc(a.id)}" data-decision="Declined">Decline</button>`:''})),'No membership applications yet.');if(tab==='Attendees')html=listRows(db.registrations.filter(r=>activeClub(db.events.find(e=>e.id===r.eventId)||{})).map(r=>({title:r.name,detail:(db.events.find(e=>e.id===r.eventId)?.title||'')+' · '+r.email+' · '+r.studentId,status:'RSVP'})),'No attendees yet.');if(tab==='Club profile'){const c=club(leadClub);html=`<h3>Manage ${esc(c.name)}</h3><p class="helper">Only this club can be edited in the demo.</p><form id="club-edit" class="form-grid"><label class="wide">Mission<textarea name="mission" required>${esc(c.mission)}</textarea></label><label>Social handle<input name="social" value="${esc(c.social)}"></label><label>Recruitment status<select name="recruiting"><option value="true" ${c.recruiting?'selected':''}>Open</option><option value="false" ${!c.recruiting?'selected':''}>Closed</option></select></label><button class="btn primary">Save club profile</button></form>`}}
+if(role==='faculty'){const assigned=db.events.filter(e=>club(e.clubId)?.mentor===mentor);if(tab==='Faculty approvals')html=listRows(assigned.filter(e=>e.status==='Pending Faculty Approval').map(e=>({title:e.title,detail:proposalDetail(e),status:e.status,action:`<button class="btn small primary" data-approve-faculty="${esc(e.id)}">Digitally sign off</button><button class="btn small danger" data-reject="${esc(e.id)}">Return to draft</button>`})),'No proposals awaiting faculty review.');else html=listRows(assigned.filter(e=>e.signatures?.length).map(e=>({title:e.title,detail:e.signatures.map(s=>s.by+' signed '+s.at).join(', '),status:e.status})),'No faculty approvals yet.');}
+if(role==='admin'){if(tab==='Admin approvals')html=listRows(db.events.filter(e=>e.status==='Pending Admin Approval').map(e=>({title:e.title,detail:proposalDetail(e),status:e.status,action:`<button class="btn small primary" data-approve-admin="${esc(e.id)}">Clear & publish</button><button class="btn small danger" data-reject="${esc(e.id)}">Return to draft</button>`})),'No proposals pending final approval.');if(tab==='Club requests')html=`<h3>Club registration requests</h3><p class="helper">Representatives must be authorized before gaining access. Requests here are illustrative.</p><form id="club-request" class="form-grid"><label>Club name<input name="name" required></label><label>Category<select name="category"><option>Technical</option><option>Cultural</option><option>Sports</option><option>Social</option></select></label><label>Faculty mentor<input name="mentor" required></label><label>Representative<input name="lead" required></label><label class="wide">Mission<textarea name="mission" required></textarea></label><button class="btn primary">Add pending club request (demo)</button></form>${listRows(db.clubRequests.map(r=>({title:r.name,detail:r.category+' · '+r.lead+' · '+r.mentor,status:r.status,action:r.status==='Pending'?`<button class="btn small primary" data-clubapprove="${esc(r.id)}">Approve club</button>`:''})),'No pending club requests.')}`;if(tab==='All events')html=listRows(db.events.map(e=>({title:e.title,detail:club(e.clubId)?.name+' · '+pretty(e.date)+' · '+venue(e.venueId)?.name,status:e.status})),'No events.');if(tab==='Analytics & audit')html=`<div class="two-col"><div class="panel"><h3>${published().length}</h3>Published events</div><div class="panel"><h3>${db.registrations.length}</h3>Team registrations in this browser</div><div class="panel"><h3>${db.clubs.filter(c=>c.status==='Approved').length}</h3>Approved clubs</div><div class="panel"><h3>${db.events.filter(e=>e.status.startsWith('Pending')).length}</h3>Pending event approvals</div></div><h3>Audit activity</h3>${db.audit.length?db.audit.slice(0,30).map(a=>`<div class="audit">${esc(a.at)} · ${esc(a.role)} · <b>${esc(a.action)}</b> — ${esc(a.detail)}</div>`).join(''):'<p class="empty">No audit activity yet.</p>'}`;if(tab==='Global settings')html=`<h3>Campus settings</h3><div class="panel"><label><input type="checkbox" id="recruitment-toggle" ${db.settings.recruitmentOpen?'checked':''}> Allow club membership applications</label></div><p class="helper">Authentication provider, permissions and integration settings require a real backend.</p><button class="btn light" id="reset-demo">Reset all local demo data</button>`;}
+$('workspace-content').innerHTML=html;}
+function listRows(items,empty){return items.length?items.map(i=>`<div class="rowline"><div><h4>${esc(i.title)}</h4><p>${i.detail}</p></div><div class="actions"><span class="chip ${i.status?.includes('Pending')?'pending':''}">${esc(i.status)}</span>${i.action||''}</div></div>`).join(''):`<div class="empty">${esc(empty)}</div>`}
+function proposalDetail(e){return `${esc(club(e.clubId)?.name)} · ${pretty(e.date)} ${esc(e.start)}–${esc(e.end)} · ${esc(venue(e.venueId)?.name)} · Budget request ₹${Number(e.budget||0).toLocaleString('en-IN')} · Equipment: ${esc(e.resources)} · Security: ${esc(e.security)} ${e.signatures?.length?' · Signed by '+esc(e.signatures.map(s=>s.by).join(', ')):''}`}
+function eventForm(){return `<h3>Create an event draft</h3><p class="helper">Drafts do not reserve a venue. Sending for faculty review creates a pending hold if the slot is free. Venue holds remain until approval or rejection.</p><form id="create-event" class="form-grid"><label class="wide">Event title<input name="title" required maxlength="90" placeholder="e.g., Build Night"></label><label>Date<input type="date" name="date" min="2026-10-19" required></label><label>Venue<select name="venueId" required>${db.venues.map(v=>`<option value="${esc(v.id)}">${esc(v.name)} (${v.capacity})</option>`).join('')}</select></label><label>Start time<input type="time" name="start" value="10:00" required></label><label>End time<input type="time" name="end" value="12:00" required></label><label>Entry type<select name="entry"><option>Free</option><option>Paid</option></select></label><label>Budget requested (₹)<input type="number" name="budget" value="0" min="0" required></label><label class="wide">Event description<textarea name="description" required></textarea></label><label>Equipment / technical support<input name="resources" placeholder="Sound system, projector"></label><label>Security requirements<input name="security" placeholder="Stewards, first aid"></label><button class="btn primary">Save draft</button></form>`}
+function refresh(){renderEvents();renderClubs();renderVenues();renderWorkspace()}
+function notifyAction(action,details){audit(action,details);refresh();toast(action)}
+$('role').addEventListener('change',e=>{role=e.target.value;tab='';renderWorkspace();toast('Switched to '+configs[role].title+' (demo only)')});
+['search','category-filter','date-filter','venue-filter','entry-filter'].forEach(id=>$(id).addEventListener('input',renderEvents));
+$('clear-filters').onclick=()=>{['search','category-filter','date-filter','venue-filter','entry-filter'].forEach(id=>$(id).value='');renderEvents()};
+$('modal-close').onclick=()=>$('modal').close();$('modal').addEventListener('click',e=>{if(e.target===$('modal'))$('modal').close()});
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;if(d.event)eventDetail(d.event);if(d.club)clubDetail(d.club);if(d.register)register(d.register);if(d.join)applyJoin(d.join);if(d.tab){tab=d.tab;renderWorkspace()}
+if(d.submit){if(role!=='lead')return toast('Select club representative');const ev=db.events.find(x=>x.id===d.submit);if(!ev||!activeClub(ev)||ev.status!=='Draft')return;if(slotConflicts(ev,ev.id).length)return toast('This venue slot conflicts with an existing pending or approved event');ev.status='Pending Faculty Approval';notifyAction('Submitted for faculty review',ev.title)}
+if(d.approveFaculty){if(role!=='faculty')return;const ev=db.events.find(x=>x.id===d.approveFaculty);if(!ev||ev.status!=='Pending Faculty Approval'||club(ev.clubId)?.mentor!==mentor)return;if(slotConflicts(ev,ev.id).length)return toast('Slot conflict — cannot approve');ev.status='Pending Admin Approval';ev.signatures=[...(ev.signatures||[]),{by:mentor,at:new Date().toISOString()}];notifyAction('Faculty digitally signed (demo)',ev.title)}
+if(d.approveAdmin){if(role!=='admin')return;const ev=db.events.find(x=>x.id===d.approveAdmin);if(!ev||ev.status!=='Pending Admin Approval')return;if(slotConflicts(ev,ev.id).length)return toast('Slot conflict — cannot publish');ev.status='Published';notifyAction('Approved and published',ev.title)}
+if(d.reject){if(!['admin','faculty'].includes(role))return;const ev=db.events.find(x=>x.id===d.reject);if(!ev||role==='faculty'&&(ev.status!=='Pending Faculty Approval'||club(ev.clubId)?.mentor!==mentor)||role==='admin'&&ev.status!=='Pending Admin Approval')return;ev.status='Draft';ev.signatures=[];notifyAction('Returned to draft; venue released',ev.title)}
+if(d.membership){if(role!=='lead')return;const a=db.applications.find(x=>x.id===d.membership);if(!a||a.clubId!==leadClub||a.status!=='Pending')return;a.status=d.decision;notifyAction('Membership '+d.decision,a.name)}
+if(d.clubapprove){if(role!=='admin')return;const a=db.clubRequests.find(x=>x.id===d.clubapprove);if(!a||a.status!=='Pending')return;a.status='Approved';db.clubs.push({...a,id:'club-'+Date.now(),emoji:'✨',committee:[a.lead+' — President'],social:'',recruiting:true,status:'Approved'});notifyAction('New club approved',a.name)}
+if(b.id==='reset-demo'){if(role!=='admin')return;if(confirm('Reset all demo events, applications and registrations?')){db=clone(seed);save();refresh();toast('Demo data reset')}}});
+document.addEventListener('change',e=>{if(e.target.id==='recruitment-toggle'&&role==='admin'){db.settings.recruitmentOpen=e.target.checked;notifyAction('Recruitment setting updated',String(e.target.checked))}});
+document.addEventListener('submit',e=>{const form=e.target;if(!['rsvp-form','join-form','create-event','club-edit','club-request'].includes(form.id))return;e.preventDefault();const x=Object.fromEntries(new FormData(form));
+if(form.id==='rsvp-form'){
+  const studentIds=[x.member1StudentId,x.member2StudentId,x.member3StudentId,x.member4StudentId]
+    .map(v=>String(v||'').trim().toLowerCase());
+  if(studentIds.some(v=>!v))return toast('Please enter all 4 student IDs');
+  if(new Set(studentIds).size!==4)return toast('Each team member must have a unique student ID');
+  const registeredIds=new Set(
+    db.registrations
+      .filter(r=>r.eventId===x.eventId)
+      .flatMap(r=>Array.isArray(r.studentIds)?r.studentIds:[r.studentId])
+      .map(v=>String(v||'').trim().toLowerCase())
+  );
+  if(studentIds.some(id=>registeredIds.has(id)))return toast('One or more team members are already registered for this event');
+  db.registrations.push({
+    ...x,
+    id:'r'+Date.now(),
+    registrationType:'Team',
+    teamSize:4,
+    studentIds
+  });
+  $('modal').close();
+  notifyAction('Team registration recorded',x.teamName||x.eventId)
+}
+if(form.id==='join-form'){if(!club(x.clubId)?.recruiting||!db.settings.recruitmentOpen)return toast('Recruitment is closed');if(db.applications.some(a=>a.clubId===x.clubId&&a.studentId.toLowerCase()===x.studentId.toLowerCase()))return toast('This student ID has already applied');db.applications.push({...x,id:'a'+Date.now(),status:'Pending'});$('modal').close();notifyAction('Club membership application submitted',club(x.clubId)?.name)}
+if(form.id==='create-event'){if(role!=='lead')return;if(x.start>=x.end)return toast('End time must be after start time');if(x.date<'2026-10-19')return toast('Select a future date');const ev={...x,id:'e'+Date.now(),clubId:leadClub,emoji:'⚡',status:'Draft',signatures:[]};db.events.push(ev);tab='My club events';notifyAction('Event draft saved',ev.title)}
+if(form.id==='club-edit'){if(role!=='lead')return;const c=club(leadClub);c.mission=x.mission;c.social=x.social;c.recruiting=x.recruiting==='true';notifyAction('Club profile saved',c.name)}
+if(form.id==='club-request'){if(role!=='admin')return;db.clubRequests.push({...x,id:'q'+Date.now(),status:'Pending'});notifyAction('Club request created',x.name)}
+});
+$('venue-filter').innerHTML='<option value="">All venues</option>'+db.venues.map(v=>`<option value="${esc(v.id)}">${esc(v.name)}</option>`).join('');refresh();

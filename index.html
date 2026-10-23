@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width,initial-scale=1" name="viewport"/>
+  <title>
+   CIT ClubHub | Campus clubs &amp; events
+  </title>
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+  <link href="styles.css" rel="stylesheet"/>
+ </head>
+ <body>
+  <header class="topbar">
+   <a class="identity" href="#home">
+    <img alt="Chennai Institute of Technology" src="cit-logo.png"/>
+    <span>
+     <b>
+      ClubHub
+     </b>
+     <small>
+      CHENNAI INSTITUTE OF TECHNOLOGY
+     </small>
+    </span>
+   </a>
+   <nav id="nav">
+    <a href="#home">
+     Discover
+    </a>
+    <a href="#clubs">
+     Clubs
+    </a>
+    <a href="#venues">
+     Venues
+    </a>
+    <a href="#dashboard">
+     My workspace
+    </a>
+   </nav>
+   <div class="user-control">
+    <label for="role">
+     Preview as
+    </label>
+    <select aria-label="Switch demo role" id="role">
+     <option value="student">
+      Student
+     </option>
+     <option value="lead">
+      Club representative
+     </option>
+     <option value="faculty">
+      Faculty mentor
+     </option>
+     <option value="admin">
+      Super administrator
+     </option>
+    </select>
+   </div>
+  </header>
+  <main>
+   <section class="hero" id="home">
+    <div class="hero-copy">
+     <span class="eyebrow">
+      WELCOME TO YOUR CAMPUS COMMUNITY
+     </span>
+     <h1>
+      Find your people.
+      <br/>
+      <em>
+       Make something happen.
+      </em>
+     </h1>
+     <p>
+      Every club, every campus event, one place. Discover your next experience, meet your community and make your mark.
+     </p>
+     <div class="hero-actions">
+      <a class="btn lime" href="#events">
+       Explore events ↗
+      </a>
+      <a class="btn ghost" href="#clubs">
+       Discover clubs →
+      </a>
+     </div>
+     <div class="hero-figures">
+      <div>
+       <b id="stat-events">
+        0
+       </b>
+       <span>
+        Live events
+       </span>
+      </div>
+      <div>
+       <b id="stat-clubs">
+        0
+       </b>
+       <span>
+        Active clubs
+       </span>
+      </div>
+      <div>
+       <b id="stat-venues">
+        0
+       </b>
+       <span>
+        Campus venues
+       </span>
+      </div>
+     </div>
+    </div>
+    <div class="hero-graphic">
+     <div class="glow">
+     </div>
+     <div class="hero-poster">
+      <span>
+       THIS IS YOUR CAMPUS
+      </span>
+      <div class="poster-icon">
+       ✧
+      </div>
+      <strong>
+       CREATE.
+       <br/>
+       CONNECT.
+       <br/>
+       CELEBRATE.
+      </strong>
+      <small>
+       #CITClubHub · 2026
+      </small>
+     </div>
+     <div class="float-chip">
+      ⚡ Ideas become events
+     </div>
+    </div>
+   </section>
+   <section class="wrap" id="events">
+    <div class="section-heading">
+     <div>
+      <span class="eyebrow navy">
+       DISCOVER WHAT'S NEXT
+      </span>
+      <h2>
+       All
+       <em>
+        events
+       </em>
+      </h2>
+      <p>
+       One calendar. Every student community.
+      </p>
+     </div>
+     <span class="counter" id="result-count">
+     </span>
+    </div>
+    <div class="filterbar">
+     <input id="search" placeholder="⌕ Search event or club" type="search"/>
+     <select id="category-filter">
+      <option value="">
+       All categories
+      </option>
+      <option>
+       Technical
+      </option>
+      <option>
+       Cultural
+      </option>
+      <option>
+       Sports
+      </option>
+      <option>
+       Social
+      </option>
+     </select>
+     <input id="date-filter" title="Filter by date" type="date"/>
+     <select id="venue-filter">
+      <option value="">
+       All venues
+      </option>
+     </select>
+     <select id="entry-filter">
+      <option value="">
+       Any entry type
+      </option>
+      <option value="Free">
+       Free
+      </option>
+      <option value="Paid">
+       Paid
+      </option>
+     </select>
+     <button class="btn light" id="clear-filters">
+      Clear
+     </button>
+    </div>
+    <div class="card-grid" id="events-grid">
+    </div>
+    <div class="notice" hidden="" id="no-events">
+     No published events match these filters.
+    </div>
+   </section>
+   <section class="wrap" id="clubs">
+    <div class="section-heading">
+     <div>
+      <span class="eyebrow navy">
+       MEET YOUR COMMUNITY
+      </span>
+      <h2>
+       Clubs with
+       <em>
+        purpose
+       </em>
+      </h2>
+      <p>
+       Explore a club profile and apply to join.
+      </p>
+     </div>
+    </div>
+    <div class="club-grid" id="club-grid">
+    </div>
+    <div class="notice" id="club-profile">
+     Select a club to view its microsite.
+    </div>
+   </section>
+   <section class="wrap" id="venues">
+    <div class="section-heading">
+     <div>
+      <span class="eyebrow navy">
+       PLAN SMARTER
+      </span>
+      <h2>
+       Campus
+       <em>
+        venues
+       </em>
+      </h2>
+      <p>
+       Bookings and pending holds are visible across clubs.
+      </p>
+     </div>
+    </div>
+    <div class="venue-grid" id="venue-grid">
+    </div>
+   </section>
+   <section class="wrap workspace" id="dashboard">
+    <div class="section-heading">
+     <div>
+      <span class="eyebrow navy">
+       YOUR ROLE, YOUR TOOLS
+      </span>
+      <h2 id="workspace-title">
+       Student workspace
+      </h2>
+      <p id="workspace-subtitle">
+      </p>
+     </div>
+     <span class="demo-pill">
+      Interactive prototype · local browser data
+     </span>
+    </div>
+    <div class="tabs" id="workspace-tabs">
+    </div>
+    <div class="workspace-body" id="workspace-content">
+    </div>
+   </section>
+  </main>
+  <footer>
+   <div class="footer-left">
+    <img alt="CIT logo" src="cit-logo.png"/>
+    <div>
+     <b>
+      CIT ClubHub
+     </b>
+     <p>
+      One campus. Many communities.
+     </p>
+    </div>
+   </div>
+   <span>
+    Demo platform · © 2026 Chennai Institute of Technology
+   </span>
+  </footer>
+  <dialog id="modal">
+   <button aria-label="Close" class="close" id="modal-close">
+    ×
+   </button>
+   <div id="modal-content">
+   </div>
+  </dialog>
+  <div aria-live="polite" id="toast" role="status">
+  </div>
+  <script src="app.js">
+  </script>
+ </body>
+</html>
